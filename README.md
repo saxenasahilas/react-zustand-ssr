@@ -103,6 +103,11 @@ The package uses `useSyncExternalStore` to subscribe to Zustand's `onRehydrateSt
 2. **On the Client (First Render):** `getClientSnapshot` returns `false` to match the server, preventing hydration mismatch.
 3. **After Hydration:** Once Zustand finishes reading from storage, the subscription fires, `getClientSnapshot` returns `true`, and React triggers a safe re-render with the persisted data.
 
+### Reliability & Performance
+
+- **Safety Fallback:** To handle cases where Zustand's `onRehydrateStorage` might be unreliable (e.g., sync storage or reported library edge cases), `useHydrated` includes a periodic safety check that verifies `hasHydrated()` until it returns true.
+- **Concurrent Rendering:** Using `useSyncExternalStore` ensures a consistent UI but triggers a synchronous re-render once hydration completes. For exceptionally large stores, this may briefly block the main thread.
+
 ## TypeScript
 
 The `useHydrated` hook is type-safe. It will throw a TypeScript error if you pass a store that doesn't use the `persist` middleware.
