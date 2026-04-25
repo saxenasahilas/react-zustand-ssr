@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { useSyncExternalStore, useRef, useMemo } from 'react';
 import { PersistedStoreHook } from './types';
 
 /**
@@ -7,6 +7,11 @@ import { PersistedStoreHook } from './types';
  * client render before rehydration completes.
  */
 export function useHydrated<T>(store: PersistedStoreHook<T>): boolean {
+  // We use a ref to track if we've already finished the first render pass on the client.
+  // This helps us ensure that the first client render ALWAYS returns false to match the server,
+  // preventing hydration mismatches.
+  const isFirstRender = useRef(true);
+
   return useSyncExternalStore(
     (callback) => {
       // If already hydrated, we don't need to subscribe for the finish event,
@@ -24,7 +29,17 @@ export function useHydrated<T>(store: PersistedStoreHook<T>): boolean {
         };
       });
     },
-    () => store.persist.hasHydrated(),
+    () => {
+      // On the client:
+      // If it's the very first call during hydration, we MUST return false
+      // to match the server snapshot.
+      if (isFirstRender.current) {
+        isFirstRender.current = false;
+        return false;
+      }
+      // Subsequent calls return the actual hydration status.
+      return store.persist.hasHydrated();
+    },
     () => false // Always false on the server
   );
 }

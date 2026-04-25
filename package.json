@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Solve Zustand persist middleware SSR hydration mismatches in Next.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/saxenasahilas/react-zustand-ssr.git"
+  },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -10,22 +14,26 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
     },
     "./useHydrated": {
       "types": "./dist/useHydrated.d.ts",
       "import": "./dist/useHydrated.js",
-      "require": "./dist/useHydrated.cjs"
+      "require": "./dist/useHydrated.cjs",
+      "default": "./dist/useHydrated.js"
     },
     "./createHydratedStore": {
       "types": "./dist/createHydratedStore.d.ts",
       "import": "./dist/createHydratedStore.js",
-      "require": "./dist/createHydratedStore.cjs"
+      "require": "./dist/createHydratedStore.cjs",
+      "default": "./dist/createHydratedStore.js"
     },
     "./createHydratedStoreContext": {
       "types": "./dist/createHydratedStoreContext.d.ts",
       "import": "./dist/createHydratedStoreContext.js",
-      "require": "./dist/createHydratedStoreContext.cjs"
+      "require": "./dist/createHydratedStoreContext.cjs",
+      "default": "./dist/createHydratedStoreContext.js"
     }
   },
   "files": [
