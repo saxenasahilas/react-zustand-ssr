@@ -21,13 +21,25 @@ export function useHydrated<T>(store: PersistedStoreHook<T>): boolean {
       }
 
       // Subscribe to rehydration events
-      return store.persist.onRehydrateStorage(() => {
-        // This function is called when rehydration starts.
-        // It returns another function that is called when rehydration ends.
+      const unsubscribe = store.persist.onRehydrateStorage(() => {
         return (state, error) => {
           callback();
         };
       });
+
+      // Extra safety: Check periodically in case onRehydrateStorage doesn't fire
+      // or if storage was sync and we missed the event.
+      const interval = setInterval(() => {
+        if (store.persist.hasHydrated()) {
+          callback();
+          clearInterval(interval);
+        }
+      }, 100);
+
+      return () => {
+        unsubscribe();
+        clearInterval(interval);
+      };
     },
     () => {
       // On the client:
