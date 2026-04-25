@@ -1,4 +1,4 @@
-import { useSyncExternalStore, useRef, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { PersistedStoreHook } from './types';
 
 /**
@@ -7,51 +7,32 @@ import { PersistedStoreHook } from './types';
  * client render before rehydration completes.
  */
 export function useHydrated<T>(store: PersistedStoreHook<T>): boolean {
-  // We use a ref to track if we've already finished the first render pass on the client.
-  // This helps us ensure that the first client render ALWAYS returns false to match the server,
-  // preventing hydration mismatches.
-  const isFirstRender = useRef(true);
+  const [hydrated, setHydrated] = useState(false);
 
-  return useSyncExternalStore(
-    (callback) => {
-      // If already hydrated, we don't need to subscribe for the finish event,
-      // but we still return a no-op cleanup for the subscription.
-      if (store.persist.hasHydrated()) {
-        return () => {};
-      }
+  useEffect(() => {
+    if (store.persist.hasHydrated()) {
+      setHydrated(true);
+      return;
+    }
 
-      // Subscribe to rehydration events
-      const unsubscribe = store.persist.onRehydrateStorage(() => {
-        return (state, error) => {
-          callback();
-        };
-      });
-
-      // Extra safety: Check periodically in case onRehydrateStorage doesn't fire
-      // or if storage was sync and we missed the event.
-      const interval = setInterval(() => {
-        if (store.persist.hasHydrated()) {
-          callback();
-          clearInterval(interval);
-        }
-      }, 100);
-
+    const unsubscribe = store.persist.onRehydrateStorage(() => {
       return () => {
-        unsubscribe();
-        clearInterval(interval);
+        setHydrated(true);
       };
-    },
-    () => {
-      // On the client:
-      // If it's the very first call during hydration, we MUST return false
-      // to match the server snapshot.
-      if (isFirstRender.current) {
-        isFirstRender.current = false;
-        return false;
+    });
+
+    const interval = setInterval(() => {
+      if (store.persist.hasHydrated()) {
+        setHydrated(true);
+        clearInterval(interval);
       }
-      // Subsequent calls return the actual hydration status.
-      return store.persist.hasHydrated();
-    },
-    () => false // Always false on the server
-  );
+    }, 100);
+
+    return () => {
+      unsubscribe();
+      clearInterval(interval);
+    };
+  }, [store]);
+
+  return hydrated;
 }
